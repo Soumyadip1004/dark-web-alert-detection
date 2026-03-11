@@ -31,22 +31,46 @@
   },
   "formatter": {
     "enabled": true,
-    "indentStyle": "tab"
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 80
   },
-  "assist": { "actions": { "source": { "organizeImports": "on" } } },
   "linter": {
     "enabled": true,
     "rules": {
       "recommended": true,
+      "suspicious": {
+        "noUnknownAtRules": "off",
+        "noArrayIndexKey": "off",
+        "noDoubleEquals": "off"
+      },
+      "complexity": {
+        "useLiteralKeys": {
+          "level": "warn",
+          "fix": "safe"
+        }
+      },
+      "a11y": {
+        "useButtonType": "off",
+        "noSvgWithoutTitle": "off",
+        "useSemanticElements": "off",
+        "useKeyWithClickEvents": "off",
+        "noLabelWithoutControl": "off"
+      },
       "correctness": {
-        "useExhaustiveDependencies": "info"
+        "noChildrenProp": "off",
+        "noUnusedImports": {
+          "level": "warn",
+          "fix": "safe"
+        }
       },
       "nursery": {
         "useSortedClasses": {
-          "level": "warn",
+          "level": "info",
           "fix": "safe",
           "options": {
-            "functions": ["clsx", "cva", "cn"]
+            "attributes": ["className"],
+            "functions": ["cn", "cva", "tw", "clsx"]
           }
         }
       },
@@ -62,15 +86,35 @@
         "noInferrableTypes": "error",
         "noUselessElse": "error"
       }
+    },
+    "domains": {
+      "next": "recommended",
+      "react": "recommended"
+    }
+  },
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
     }
   },
   "javascript": {
     "formatter": {
-      "quoteStyle": "double"
+      "quoteStyle": "double",
+      "jsxQuoteStyle": "double",
+      "semicolons": "always",
+      "trailingCommas": "all",
+      "bracketSameLine": false,
+      "bracketSpacing": true,
+      "arrowParentheses": "asNeeded",
+      "quoteProperties": "asNeeded",
+      "lineEnding": "lf"
     }
   },
   "css": {
     "parser": {
+      "cssModules": true,
       "tailwindDirectives": true
     }
   }
