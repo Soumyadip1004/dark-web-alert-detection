@@ -10,7 +10,11 @@ import { authClient } from "@/lib/auth-client";
 
 import Loader from "./loader";
 
-export default function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () => void }) {
+export default function SignInForm({
+  onSwitchToSignUp,
+}: {
+  onSwitchToSignUp: () => void;
+}) {
   const router = useRouter();
   const { isPending } = authClient.useSession();
 
@@ -30,7 +34,7 @@ export default function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () 
             router.push("/dashboard");
             toast.success("Sign in successful");
           },
-          onError: (error) => {
+          onError: error => {
             toast.error(error.error.message || error.error.statusText);
           },
         },
@@ -49,11 +53,11 @@ export default function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () 
   }
 
   return (
-    <div className="mx-auto w-full mt-10 max-w-md p-6">
-      <h1 className="mb-6 text-center text-3xl font-bold">Welcome Back</h1>
+    <div className="mx-auto mt-10 w-full max-w-md p-6">
+      <h1 className="mb-6 text-center font-bold text-3xl">Welcome Back</h1>
 
       <form
-        onSubmit={(e) => {
+        onSubmit={e => {
           e.preventDefault();
           e.stopPropagation();
           form.handleSubmit();
@@ -62,7 +66,7 @@ export default function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () 
       >
         <div>
           <form.Field name="email">
-            {(field) => (
+            {field => (
               <div className="space-y-2">
                 <Label htmlFor={field.name}>Email</Label>
                 <Input
@@ -71,9 +75,9 @@ export default function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () 
                   type="email"
                   value={field.state.value}
                   onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
+                  onChange={e => field.handleChange(e.target.value)}
                 />
-                {field.state.meta.errors.map((error) => (
+                {field.state.meta.errors.map(error => (
                   <p key={error?.message} className="text-red-500">
                     {error?.message}
                   </p>
@@ -85,7 +89,7 @@ export default function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () 
 
         <div>
           <form.Field name="password">
-            {(field) => (
+            {field => (
               <div className="space-y-2">
                 <Label htmlFor={field.name}>Password</Label>
                 <Input
@@ -94,9 +98,9 @@ export default function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () 
                   type="password"
                   value={field.state.value}
                   onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
+                  onChange={e => field.handleChange(e.target.value)}
                 />
-                {field.state.meta.errors.map((error) => (
+                {field.state.meta.errors.map(error => (
                   <p key={error?.message} className="text-red-500">
                     {error?.message}
                   </p>
@@ -107,10 +111,17 @@ export default function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () 
         </div>
 
         <form.Subscribe
-          selector={(state) => ({ canSubmit: state.canSubmit, isSubmitting: state.isSubmitting })}
+          selector={state => ({
+            canSubmit: state.canSubmit,
+            isSubmitting: state.isSubmitting,
+          })}
         >
           {({ canSubmit, isSubmitting }) => (
-            <Button type="submit" className="w-full" disabled={!canSubmit || isSubmitting}>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={!canSubmit || isSubmitting}
+            >
               {isSubmitting ? "Submitting..." : "Sign In"}
             </Button>
           )}

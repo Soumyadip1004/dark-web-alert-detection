@@ -10,7 +10,11 @@ import { authClient } from "@/lib/auth-client";
 
 import Loader from "./loader";
 
-export default function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () => void }) {
+export default function SignUpForm({
+  onSwitchToSignIn,
+}: {
+  onSwitchToSignIn: () => void;
+}) {
   const router = useRouter();
   const { isPending } = authClient.useSession();
 
@@ -32,7 +36,7 @@ export default function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () 
             router.push("/dashboard");
             toast.success("Sign up successful");
           },
-          onError: (error) => {
+          onError: error => {
             toast.error(error.error.message || error.error.statusText);
           },
         },
@@ -52,11 +56,11 @@ export default function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () 
   }
 
   return (
-    <div className="mx-auto w-full mt-10 max-w-md p-6">
-      <h1 className="mb-6 text-center text-3xl font-bold">Create Account</h1>
+    <div className="mx-auto mt-10 w-full max-w-md p-6">
+      <h1 className="mb-6 text-center font-bold text-3xl">Create Account</h1>
 
       <form
-        onSubmit={(e) => {
+        onSubmit={e => {
           e.preventDefault();
           e.stopPropagation();
           form.handleSubmit();
@@ -65,7 +69,7 @@ export default function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () 
       >
         <div>
           <form.Field name="name">
-            {(field) => (
+            {field => (
               <div className="space-y-2">
                 <Label htmlFor={field.name}>Name</Label>
                 <Input
@@ -73,9 +77,9 @@ export default function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () 
                   name={field.name}
                   value={field.state.value}
                   onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
+                  onChange={e => field.handleChange(e.target.value)}
                 />
-                {field.state.meta.errors.map((error) => (
+                {field.state.meta.errors.map(error => (
                   <p key={error?.message} className="text-red-500">
                     {error?.message}
                   </p>
@@ -87,7 +91,7 @@ export default function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () 
 
         <div>
           <form.Field name="email">
-            {(field) => (
+            {field => (
               <div className="space-y-2">
                 <Label htmlFor={field.name}>Email</Label>
                 <Input
@@ -96,9 +100,9 @@ export default function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () 
                   type="email"
                   value={field.state.value}
                   onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
+                  onChange={e => field.handleChange(e.target.value)}
                 />
-                {field.state.meta.errors.map((error) => (
+                {field.state.meta.errors.map(error => (
                   <p key={error?.message} className="text-red-500">
                     {error?.message}
                   </p>
@@ -110,7 +114,7 @@ export default function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () 
 
         <div>
           <form.Field name="password">
-            {(field) => (
+            {field => (
               <div className="space-y-2">
                 <Label htmlFor={field.name}>Password</Label>
                 <Input
@@ -119,9 +123,9 @@ export default function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () 
                   type="password"
                   value={field.state.value}
                   onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(e.target.value)}
+                  onChange={e => field.handleChange(e.target.value)}
                 />
-                {field.state.meta.errors.map((error) => (
+                {field.state.meta.errors.map(error => (
                   <p key={error?.message} className="text-red-500">
                     {error?.message}
                   </p>
@@ -132,10 +136,17 @@ export default function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () 
         </div>
 
         <form.Subscribe
-          selector={(state) => ({ canSubmit: state.canSubmit, isSubmitting: state.isSubmitting })}
+          selector={state => ({
+            canSubmit: state.canSubmit,
+            isSubmitting: state.isSubmitting,
+          })}
         >
           {({ canSubmit, isSubmitting }) => (
-            <Button type="submit" className="w-full" disabled={!canSubmit || isSubmitting}>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={!canSubmit || isSubmitting}
+            >
               {isSubmitting ? "Submitting..." : "Sign Up"}
             </Button>
           )}
