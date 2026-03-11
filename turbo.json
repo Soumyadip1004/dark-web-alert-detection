@@ -33,6 +33,14 @@
     },
     "seed": {
       "cache": false
+    },
+    "crawl": {
+      "cache": false,
+      "persistent": true
+    },
+    "crawl:watch": {
+      "cache": false,
+      "persistent": true
     }
   }
 }

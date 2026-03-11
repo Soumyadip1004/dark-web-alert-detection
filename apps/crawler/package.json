@@ -4,7 +4,8 @@
   "private": true,
   "main": "src/index.ts",
   "scripts": {
-    "dev": "bun run --hot src/index.ts",
+    "crawl": "bun run src/index.ts",
+    "crawl:watch": "bun run --hot src/index.ts",
     "start": "bun run src/index.ts",
     "check-types": "tsc -b",
     "seed": "bun run src/seed.ts"
