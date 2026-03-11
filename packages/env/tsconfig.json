@@ -1,0 +1,3 @@
+{
+  "extends": "@dark-web-alert-detection/config/tsconfig.base.json"
+}

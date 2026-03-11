@@ -1,0 +1,24 @@
+{
+  "name": "@dark-web-alert-detection/auth",
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./*": {
+      "default": "./src/*.ts"
+    }
+  },
+  "scripts": {},
+  "dependencies": {
+    "@dark-web-alert-detection/db": "workspace:*",
+    "@dark-web-alert-detection/env": "workspace:*",
+    "better-auth": "catalog:",
+    "dotenv": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@dark-web-alert-detection/config": "workspace:*",
+    "typescript": "^5"
+  }
+}
