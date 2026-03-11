@@ -56,9 +56,7 @@ export default function SignUpForm({
   }
 
   return (
-    <div className="mx-auto mt-10 w-full max-w-md p-6">
-      <h1 className="mb-6 text-center font-bold text-3xl">Create Account</h1>
-
+    <>
       <form
         onSubmit={e => {
           e.preventDefault();
@@ -75,12 +73,13 @@ export default function SignUpForm({
                 <Input
                   id={field.name}
                   name={field.name}
+                  placeholder="John Doe"
                   value={field.state.value}
                   onBlur={field.handleBlur}
                   onChange={e => field.handleChange(e.target.value)}
                 />
                 {field.state.meta.errors.map(error => (
-                  <p key={error?.message} className="text-red-500">
+                  <p key={error?.message} className="text-red-500 text-xs">
                     {error?.message}
                   </p>
                 ))}
@@ -98,12 +97,13 @@ export default function SignUpForm({
                   id={field.name}
                   name={field.name}
                   type="email"
+                  placeholder="you@example.com"
                   value={field.state.value}
                   onBlur={field.handleBlur}
                   onChange={e => field.handleChange(e.target.value)}
                 />
                 {field.state.meta.errors.map(error => (
-                  <p key={error?.message} className="text-red-500">
+                  <p key={error?.message} className="text-red-500 text-xs">
                     {error?.message}
                   </p>
                 ))}
@@ -121,12 +121,13 @@ export default function SignUpForm({
                   id={field.name}
                   name={field.name}
                   type="password"
+                  placeholder="••••••••"
                   value={field.state.value}
                   onBlur={field.handleBlur}
                   onChange={e => field.handleChange(e.target.value)}
                 />
                 {field.state.meta.errors.map(error => (
-                  <p key={error?.message} className="text-red-500">
+                  <p key={error?.message} className="text-red-500 text-xs">
                     {error?.message}
                   </p>
                 ))}
@@ -147,7 +148,7 @@ export default function SignUpForm({
               className="w-full"
               disabled={!canSubmit || isSubmitting}
             >
-              {isSubmitting ? "Submitting..." : "Sign Up"}
+              {isSubmitting ? "Creating account..." : "Sign Up"}
             </Button>
           )}
         </form.Subscribe>
@@ -157,11 +158,11 @@ export default function SignUpForm({
         <Button
           variant="link"
           onClick={onSwitchToSignIn}
-          className="text-indigo-600 hover:text-indigo-800"
+          className="text-muted-foreground text-xs hover:text-foreground"
         >
           Already have an account? Sign In
         </Button>
       </div>
-    </div>
+    </>
   );
 }
