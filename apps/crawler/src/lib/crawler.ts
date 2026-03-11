@@ -1,4 +1,5 @@
 import { env } from "@dark-web-alert-detection/env/crawler";
+import { analyzePost } from "./analyzer";
 import { Fetcher } from "./fetcher";
 import { createLogger } from "./logger";
 import { parsePage } from "./parser";
@@ -35,6 +36,7 @@ export interface CrawlResult {
   success: boolean;
   postId?: string;
   linksDiscovered: number;
+  alertsGenerated: number;
   error?: string;
   durationMs: number;
 }
@@ -63,6 +65,7 @@ export class Crawler {
   private cycleCount = 0;
   private totalCrawled = 0;
   private totalErrors = 0;
+  private totalAlerts = 0;
 
   constructor(options?: Partial<CrawlerOptions>) {
     this.options = {
@@ -175,6 +178,7 @@ export class Crawler {
       `Cycle #${this.cycleCount} complete — ` +
         `visited: ${queueStats.visited}, ` +
         `total crawled: ${this.totalCrawled}, ` +
+        `total alerts: ${this.totalAlerts}, ` +
         `total errors: ${this.totalErrors}`,
     );
 
@@ -214,6 +218,7 @@ export class Crawler {
       running: this.running,
       cycleCount: this.cycleCount,
       totalCrawled: this.totalCrawled,
+      totalAlerts: this.totalAlerts,
       totalErrors: this.totalErrors,
       activeWorkers: this.activeWorkers,
       queue: this.queue.stats(),
@@ -305,6 +310,7 @@ export class Crawler {
           sourceId,
           success: true,
           linksDiscovered: 0,
+          alertsGenerated: 0,
           durationMs: Date.now() - startTime,
         };
       }
@@ -328,6 +334,7 @@ export class Crawler {
           sourceId,
           success: true,
           linksDiscovered: 0,
+          alertsGenerated: 0,
           durationMs: Date.now() - startTime,
         };
       }
@@ -339,12 +346,34 @@ export class Crawler {
         parsed,
       });
 
-      // 4. Update the source's lastCrawledAt if this is a seed URL (depth 0)
+      // 4. Run the leak detection engine on the stored post
+      let alertsGenerated = 0;
+      try {
+        const analysisResult = await analyzePost(storedPost);
+        alertsGenerated = analysisResult.alerts.length;
+        this.totalAlerts += alertsGenerated;
+
+        if (analysisResult.shouldAlert) {
+          log.info(
+            `🚨 Leak detected [${analysisResult.riskLevel}] (score: ${analysisResult.compositeScore.toFixed(1)}): ${url} — ` +
+              `${alertsGenerated} alert(s)`,
+          );
+        }
+      } catch (analysisError) {
+        const analysisMsg =
+          analysisError instanceof Error
+            ? analysisError.message
+            : String(analysisError);
+        log.error(`Analysis failed for ${url}: ${analysisMsg}`);
+        // Don't fail the entire crawl — the post is already stored
+      }
+
+      // 5. Update the source's lastCrawledAt if this is a seed URL (depth 0)
       if (depth === 0) {
         await updateSourceLastCrawled(sourceId);
       }
 
-      // 5. Enqueue discovered links for further crawling
+      // 6. Enqueue discovered links for further crawling
       //    Only follow links that belong to the same domain (stay scoped)
       const scopedLinks = this.filterSameDomain(parsed.links, url);
       const enqueued = this.queue.enqueueMany(scopedLinks, sourceId, depth + 1);
@@ -356,7 +385,7 @@ export class Crawler {
 
       log.info(
         `✓ Crawled (${durationMs}ms): ${url} → ` +
-          `postId=${storedPost.id}, links=${enqueued}/${parsed.links.length}`,
+          `postId=${storedPost.id}, links=${enqueued}/${parsed.links.length}, alerts=${alertsGenerated}`,
       );
 
       return {
@@ -365,6 +394,7 @@ export class Crawler {
         success: true,
         postId: storedPost.id,
         linksDiscovered: enqueued,
+        alertsGenerated,
         durationMs,
       };
     } catch (error) {
@@ -390,6 +420,7 @@ export class Crawler {
         sourceId,
         success: false,
         linksDiscovered: 0,
+        alertsGenerated: 0,
         error: message,
         durationMs,
       };

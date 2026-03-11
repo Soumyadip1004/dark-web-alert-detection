@@ -23,6 +23,7 @@
       "name": "crawler",
       "dependencies": {
         "@dark-web-alert-detection/db": "workspace:*",
+        "@dark-web-alert-detection/detection": "workspace:*",
         "@dark-web-alert-detection/env": "workspace:*",
         "axios": "^1.9.0",
         "cheerio": "^1.0.0",
@@ -116,6 +117,15 @@
       "devDependencies": {
         "@dark-web-alert-detection/config": "workspace:*",
         "prisma": "^7.2.0",
+        "typescript": "^5",
+      },
+    },
+    "packages/detection": {
+      "name": "@dark-web-alert-detection/detection",
+      "version": "0.0.0",
+      "devDependencies": {
+        "@dark-web-alert-detection/config": "workspace:*",
+        "@types/bun": "catalog:",
         "typescript": "^5",
       },
     },
@@ -292,6 +302,8 @@
     "@dark-web-alert-detection/config": ["@dark-web-alert-detection/config@workspace:packages/config"],
 
     "@dark-web-alert-detection/db": ["@dark-web-alert-detection/db@workspace:packages/db"],
+
+    "@dark-web-alert-detection/detection": ["@dark-web-alert-detection/detection@workspace:packages/detection"],
 
     "@dark-web-alert-detection/env": ["@dark-web-alert-detection/env@workspace:packages/env"],
 
