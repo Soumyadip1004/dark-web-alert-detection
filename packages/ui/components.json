@@ -1,6 +1,6 @@
 {
   "$schema": "https://ui.shadcn.com/schema.json",
-  "style": "base-lyra",
+  "style": "base-nova",
   "rsc": true,
   "tsx": true,
   "tailwind": {
@@ -10,6 +10,7 @@
     "cssVariables": true,
     "prefix": ""
   },
+  "rtl": false,
   "iconLibrary": "lucide",
   "aliases": {
     "components": "@dark-web-alert-detection/ui/components",
