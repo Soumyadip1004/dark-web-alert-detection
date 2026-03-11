@@ -19,7 +19,6 @@ import {
   SelectValue,
 } from "@dark-web-alert-detection/ui/components/select";
 import { Separator } from "@dark-web-alert-detection/ui/components/separator";
-import { Skeleton } from "@dark-web-alert-detection/ui/components/skeleton";
 import {
   Table,
   TableBody,
@@ -31,8 +30,8 @@ import {
 import { cn } from "@dark-web-alert-detection/ui/lib/utils";
 import {
   AlertTriangle,
-  ChevronLeft,
-  ChevronRight,
+  ChevronLeftIcon,
+  ChevronRightIcon,
   ExternalLink,
   Globe,
   Loader2,
@@ -100,90 +99,6 @@ function PriorityBadge({ priority }: { priority: Priority }) {
   );
 }
 
-// ─── Pagination ────────────────────────────────────────
-
-function Pagination({
-  pagination,
-  onPageChange,
-}: {
-  pagination: PaginationInfo;
-  onPageChange: (page: number) => void;
-}) {
-  const { page, totalPages, total, limit, hasPrev, hasNext } = pagination;
-  const start = (page - 1) * limit + 1;
-  const end = Math.min(page * limit, total);
-
-  return (
-    <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-      <p className="text-muted-foreground text-xs">
-        Showing <span className="font-medium tabular-nums">{start}</span>–
-        <span className="font-medium tabular-nums">{end}</span> of{" "}
-        <span className="font-medium tabular-nums">{total}</span> sources
-      </p>
-      <div className="flex items-center gap-1">
-        <Button
-          variant="outline"
-          size="icon-xs"
-          disabled={!hasPrev}
-          onClick={() => onPageChange(page - 1)}
-        >
-          <ChevronLeft className="size-3.5" />
-        </Button>
-        {Array.from({ length: Math.min(totalPages, 5) }).map((_, i) => {
-          let pageNum: number;
-          if (totalPages <= 5) {
-            pageNum = i + 1;
-          } else if (page <= 3) {
-            pageNum = i + 1;
-          } else if (page >= totalPages - 2) {
-            pageNum = totalPages - 4 + i;
-          } else {
-            pageNum = page - 2 + i;
-          }
-          return (
-            <Button
-              key={pageNum}
-              variant={pageNum === page ? "default" : "outline"}
-              size="icon-xs"
-              onClick={() => onPageChange(pageNum)}
-              className="tabular-nums"
-            >
-              {pageNum}
-            </Button>
-          );
-        })}
-        <Button
-          variant="outline"
-          size="icon-xs"
-          disabled={!hasNext}
-          onClick={() => onPageChange(page + 1)}
-        >
-          <ChevronRight className="size-3.5" />
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-// ─── Skeleton Loader ───────────────────────────────────
-
-function SourcesTableSkeleton() {
-  return (
-    <div className="space-y-3">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="flex items-center gap-4 px-2 py-3">
-          <Skeleton className="h-5 w-32" />
-          <Skeleton className="h-5 w-40 flex-1" />
-          <Skeleton className="h-5 w-24" />
-          <Skeleton className="h-5 w-20" />
-          <Skeleton className="h-5 w-20" />
-          <Skeleton className="h-8 w-16" />
-        </div>
-      ))}
-    </div>
-  );
-}
-
 // ─── Add / Edit Source Form ────────────────────────────
 
 interface SourceFormData {
@@ -222,58 +137,71 @@ function SourceForm({
     Partial<Record<keyof SourceFormData, string>>
   >({});
 
-  function validate(): boolean {
-    const errs: Partial<Record<keyof SourceFormData, string>> = {};
+  // Simple validation
+  function validate() {
+    const errs: typeof errors = {};
     if (!form.name.trim()) errs.name = "Name is required";
     if (!form.url.trim()) errs.url = "URL is required";
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
+    return errs;
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (validate()) {
-      onSubmit(form);
+    const errs = validate();
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs);
+      return;
     }
+    onSubmit(form);
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Name */}
-      <div className="space-y-1.5">
-        <Label htmlFor="source-name">Name</Label>
-        <Input
-          id="source-name"
-          placeholder="e.g. BreachForums"
-          value={form.name}
-          onChange={e => setForm({ ...form, name: e.target.value })}
-        />
-        {errors.name && <p className="text-red-500 text-xs">{errors.name}</p>}
-      </div>
-
-      {/* URL */}
-      <div className="space-y-1.5">
-        <Label htmlFor="source-url">URL</Label>
-        <Input
-          id="source-url"
-          placeholder="e.g. http://example.onion"
-          value={form.url}
-          onChange={e => setForm({ ...form, url: e.target.value })}
-        />
-        {errors.url && <p className="text-red-500 text-xs">{errors.url}</p>}
-      </div>
-
-      {/* Category & Priority row */}
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2">
+        {/* Name */}
         <div className="space-y-1.5">
-          <Label>Category</Label>
+          <Label htmlFor="source-name" className="text-xs">
+            Name
+          </Label>
+          <Input
+            id="source-name"
+            value={form.name}
+            onChange={e => setForm({ ...form, name: e.target.value })}
+            placeholder="e.g. BreachForums"
+            className="h-8 text-xs"
+          />
+          {errors.name && (
+            <p className="text-destructive text-xs">{errors.name}</p>
+          )}
+        </div>
+
+        {/* URL */}
+        <div className="space-y-1.5">
+          <Label htmlFor="source-url" className="text-xs">
+            URL
+          </Label>
+          <Input
+            id="source-url"
+            value={form.url}
+            onChange={e => setForm({ ...form, url: e.target.value })}
+            placeholder="e.g. http://example.onion"
+            className="h-8 text-xs"
+          />
+          {errors.url && (
+            <p className="text-destructive text-xs">{errors.url}</p>
+          )}
+        </div>
+
+        {/* Category */}
+        <div className="space-y-1.5">
+          <Label className="text-xs">Category</Label>
           <Select
             value={form.category}
             onValueChange={val =>
               setForm({ ...form, category: val as SourceCategory })
             }
           >
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="h-8 text-xs" size="sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -285,15 +213,17 @@ function SourceForm({
             </SelectContent>
           </Select>
         </div>
+
+        {/* Priority */}
         <div className="space-y-1.5">
-          <Label>Priority</Label>
+          <Label className="text-xs">Priority</Label>
           <Select
             value={form.priority}
             onValueChange={val =>
               setForm({ ...form, priority: val as Priority })
             }
           >
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="h-8 text-xs" size="sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -304,19 +234,17 @@ function SourceForm({
             </SelectContent>
           </Select>
         </div>
-      </div>
 
-      {/* Status & Login Required row */}
-      <div className="grid gap-3 sm:grid-cols-2">
+        {/* Status */}
         <div className="space-y-1.5">
-          <Label>Status</Label>
+          <Label className="text-xs">Status</Label>
           <Select
             value={form.status}
             onValueChange={val =>
               setForm({ ...form, status: val as SourceStatus })
             }
           >
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="h-8 text-xs" size="sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -327,27 +255,25 @@ function SourceForm({
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-1.5">
-          <Label>Login Required</Label>
-          <Select
-            value={form.loginRequired ? "true" : "false"}
-            onValueChange={val =>
-              setForm({ ...form, loginRequired: val === "true" })
-            }
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="false">No</SelectItem>
-              <SelectItem value="true">Yes</SelectItem>
-            </SelectContent>
-          </Select>
+
+        {/* Login Required */}
+        <div className="flex items-end gap-2 pb-0.5">
+          <label className="flex items-center gap-2 text-xs">
+            <input
+              type="checkbox"
+              checked={form.loginRequired}
+              onChange={e =>
+                setForm({ ...form, loginRequired: e.target.checked })
+              }
+              className="size-3.5 rounded border"
+            />
+            Requires login
+          </label>
         </div>
       </div>
 
-      {/* Actions */}
       <Separator />
+
       <div className="flex items-center justify-end gap-2">
         <Button
           type="button"
@@ -365,7 +291,7 @@ function SourceForm({
           className="gap-1.5"
         >
           {submitting && <Loader2 className="size-3.5 animate-spin" />}
-          {mode === "create" ? "Add Source" : "Save Changes"}
+          {mode === "create" ? "Create Source" : "Save Changes"}
         </Button>
       </div>
     </form>
@@ -419,6 +345,27 @@ function DeleteConfirmation({
     </div>
   );
 }
+
+// ─── Column config ─────────────────────────────────────
+
+const columnHeaders: {
+  key: string;
+  label: string;
+  className?: string;
+}[] = [
+  { key: "name", label: "Name" },
+  { key: "url", label: "URL", className: "hidden lg:table-cell" },
+  { key: "category", label: "Category" },
+  { key: "status", label: "Status" },
+  { key: "priority", label: "Priority" },
+  { key: "posts", label: "Posts", className: "hidden md:table-cell" },
+  {
+    key: "lastCrawled",
+    label: "Last Crawled",
+    className: "hidden md:table-cell",
+  },
+  { key: "actions", label: "", className: "w-24 text-right" },
+];
 
 // ─── Main Component ────────────────────────────────────
 
@@ -547,11 +494,20 @@ export default function SourcesPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* ─── Header ──────────────────────────────────── */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-semibold text-2xl tracking-tight">Sources</h1>
+          <div className="flex items-center gap-2.5">
+            <h1 className="font-semibold text-2xl tracking-tight">
+              Monitored Sources
+            </h1>
+            {pagination && (
+              <Badge variant="secondary" className="tabular-nums">
+                {pagination.total}
+              </Badge>
+            )}
+          </div>
           <p className="text-muted-foreground text-sm">
             Manage monitored dark-web sources.
           </p>
@@ -560,12 +516,17 @@ export default function SourcesPage() {
           <Button
             variant="outline"
             size="sm"
+            className="gap-1.5"
             onClick={() => loadSources(query)}
           >
             <RotateCw className="size-3.5" />
             Refresh
           </Button>
-          <Button size="sm" onClick={() => setPanel({ type: "create" })}>
+          <Button
+            size="sm"
+            className="gap-1.5"
+            onClick={() => setPanel({ type: "create" })}
+          >
             <Plus className="size-3.5" />
             Add Source
           </Button>
@@ -637,18 +598,87 @@ export default function SourcesPage() {
       )}
 
       {/* ─── Filters + Table ─────────────────────────── */}
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <CardTitle>Monitored Sources</CardTitle>
-              {pagination && (
-                <CardDescription>
-                  {pagination.total} source{pagination.total !== 1 ? "s" : ""}{" "}
-                  found
-                </CardDescription>
-              )}
-            </div>
+      <div className="space-y-4">
+        {/* ─── Search & Filter Toolbar ────────────── */}
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          {/* Search */}
+          <div className="relative flex-1">
+            <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search by name or URL..."
+              value={searchInput}
+              onChange={e => setSearchInput(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === "Enter") handleSearch();
+              }}
+              className="h-8 pl-8 text-xs"
+            />
+          </div>
+
+          {/* Filter selects */}
+          <div className="flex items-center gap-2">
+            <Select
+              value={query.category ?? "_all"}
+              onValueChange={val =>
+                updateFilter({
+                  category:
+                    val === "_all" ? undefined : (val as SourceCategory),
+                })
+              }
+            >
+              <SelectTrigger className="h-8 w-36 text-xs" size="sm">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="_all">All Categories</SelectItem>
+                <SelectItem value="BREACH_FORUM">Breach Forum</SelectItem>
+                <SelectItem value="MARKETPLACE">Marketplace</SelectItem>
+                <SelectItem value="PASTE_SITE">Paste Site</SelectItem>
+                <SelectItem value="LEAK_SITE">Leak Site</SelectItem>
+                <SelectItem value="OTHER">Other</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={query.status ?? "_all"}
+              onValueChange={val =>
+                updateFilter({
+                  status: val === "_all" ? undefined : (val as SourceStatus),
+                })
+              }
+            >
+              <SelectTrigger className="h-8 w-32 text-xs" size="sm">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="_all">All Status</SelectItem>
+                <SelectItem value="ACTIVE">Active</SelectItem>
+                <SelectItem value="INACTIVE">Inactive</SelectItem>
+                <SelectItem value="BLOCKED">Blocked</SelectItem>
+                <SelectItem value="ERROR">Error</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={query.priority ?? "_all"}
+              onValueChange={val =>
+                updateFilter({
+                  priority: val === "_all" ? undefined : (val as Priority),
+                })
+              }
+            >
+              <SelectTrigger className="h-8 w-32 text-xs" size="sm">
+                <SelectValue placeholder="Priority" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="_all">All Priorities</SelectItem>
+                <SelectItem value="CRITICAL">Critical</SelectItem>
+                <SelectItem value="HIGH">High</SelectItem>
+                <SelectItem value="MEDIUM">Medium</SelectItem>
+                <SelectItem value="LOW">Low</SelectItem>
+              </SelectContent>
+            </Select>
+
             {hasActiveFilters && (
               <Button
                 variant="ghost"
@@ -657,273 +687,262 @@ export default function SourcesPage() {
                 className="gap-1 text-muted-foreground text-xs"
               >
                 <X className="size-3" />
-                Clear filters
+                Clear
               </Button>
             )}
           </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* ─── Search & Filter Toolbar ────────────── */}
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            {/* Search */}
-            <div className="relative flex-1">
-              <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search by name or URL..."
-                value={searchInput}
-                onChange={e => setSearchInput(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === "Enter") handleSearch();
-                }}
-                className="h-8 pl-8 text-xs"
-              />
-            </div>
+        </div>
 
-            {/* Filter selects */}
-            <div className="flex items-center gap-2">
-              <Select
-                value={query.category ?? "_all"}
-                onValueChange={val =>
-                  updateFilter({
-                    category:
-                      val === "_all" ? undefined : (val as SourceCategory),
-                  })
-                }
-              >
-                <SelectTrigger className="h-8 w-36 text-xs" size="sm">
-                  <SelectValue placeholder="Category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="_all">All Categories</SelectItem>
-                  <SelectItem value="BREACH_FORUM">Breach Forum</SelectItem>
-                  <SelectItem value="MARKETPLACE">Marketplace</SelectItem>
-                  <SelectItem value="PASTE_SITE">Paste Site</SelectItem>
-                  <SelectItem value="LEAK_SITE">Leak Site</SelectItem>
-                  <SelectItem value="OTHER">Other</SelectItem>
-                </SelectContent>
-              </Select>
+        {/* ─── Table ─────────────────────────────── */}
+        <div className="overflow-auto rounded-lg border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                {columnHeaders.map(col => (
+                  <TableHead
+                    key={col.key}
+                    className={cn("text-xs", col.className)}
+                  >
+                    {col.label}
+                  </TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                Array.from({ length: 8 }).map((_, i) => (
+                  <TableRow key={i}>
+                    {columnHeaders.map(col => (
+                      <TableCell
+                        key={col.key}
+                        className={cn("py-2", col.className)}
+                      >
+                        <div className="h-4 w-full animate-pulse rounded bg-muted" />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : error ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={columnHeaders.length}
+                    className="h-24 text-center"
+                  >
+                    <div className="flex flex-col items-center justify-center py-16">
+                      <AlertTriangle className="mb-3 size-8 text-destructive/50" />
+                      <p className="mb-1 font-medium text-sm">{error}</p>
+                      <p className="mb-4 text-muted-foreground text-xs">
+                        Make sure the backend server is running.
+                      </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => loadSources(query)}
+                      >
+                        Try again
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : sources.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={columnHeaders.length}
+                    className="h-24 text-center"
+                  >
+                    <div className="flex flex-col items-center justify-center py-16">
+                      <Globe className="mb-3 size-10 text-muted-foreground/40" />
+                      <p className="mb-1 font-medium text-sm">
+                        No sources found
+                      </p>
+                      <p className="mb-4 text-muted-foreground text-xs">
+                        {hasActiveFilters
+                          ? "Try adjusting your filters."
+                          : "Add your first dark-web source to start monitoring."}
+                      </p>
+                      {hasActiveFilters ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={clearFilters}
+                        >
+                          Clear filters
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          className="gap-1.5"
+                          onClick={() => setPanel({ type: "create" })}
+                        >
+                          <Plus className="size-3.5" />
+                          Add Source
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                sources.map(source => {
+                  const catConfig =
+                    SOURCE_CATEGORY_CONFIG[
+                      source.category as keyof typeof SOURCE_CATEGORY_CONFIG
+                    ];
 
-              <Select
-                value={query.status ?? "_all"}
-                onValueChange={val =>
-                  updateFilter({
-                    status: val === "_all" ? undefined : (val as SourceStatus),
-                  })
-                }
-              >
-                <SelectTrigger className="h-8 w-32 text-xs" size="sm">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="_all">All Status</SelectItem>
-                  <SelectItem value="ACTIVE">Active</SelectItem>
-                  <SelectItem value="INACTIVE">Inactive</SelectItem>
-                  <SelectItem value="BLOCKED">Blocked</SelectItem>
-                  <SelectItem value="ERROR">Error</SelectItem>
-                </SelectContent>
-              </Select>
+                  return (
+                    <TableRow
+                      key={source.id}
+                      className="group cursor-pointer transition-colors hover:bg-muted/50"
+                    >
+                      {/* Name */}
+                      <TableCell className="py-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">
+                            {catConfig?.icon ?? "🌐"}
+                          </span>
+                          <div className="min-w-0">
+                            <p className="truncate font-medium text-xs">
+                              {source.name}
+                            </p>
+                            {source.loginRequired && (
+                              <Badge
+                                variant="outline"
+                                className="mt-0.5 text-[10px]"
+                              >
+                                <Shield className="mr-0.5 size-2.5" />
+                                Login
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </TableCell>
 
-              <Select
-                value={query.priority ?? "_all"}
-                onValueChange={val =>
-                  updateFilter({
-                    priority: val === "_all" ? undefined : (val as Priority),
-                  })
-                }
-              >
-                <SelectTrigger className="h-8 w-32 text-xs" size="sm">
-                  <SelectValue placeholder="Priority" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="_all">All Priorities</SelectItem>
-                  <SelectItem value="CRITICAL">Critical</SelectItem>
-                  <SelectItem value="HIGH">High</SelectItem>
-                  <SelectItem value="MEDIUM">Medium</SelectItem>
-                  <SelectItem value="LOW">Low</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+                      {/* URL */}
+                      <TableCell className="hidden max-w-[200px] py-2 lg:table-cell">
+                        <div className="flex items-center gap-1.5">
+                          <span className="truncate font-mono text-[10px] text-muted-foreground">
+                            {source.url}
+                          </span>
+                          <a
+                            href={source.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="shrink-0 text-primary opacity-0 transition-opacity hover:text-primary/80 group-hover:opacity-100"
+                            onClick={e => e.stopPropagation()}
+                          >
+                            <ExternalLink className="size-3" />
+                          </a>
+                        </div>
+                      </TableCell>
 
-          {/* ─── Table ─────────────────────────────── */}
-          {loading ? (
-            <SourcesTableSkeleton />
-          ) : error ? (
-            <div className="flex flex-col items-center justify-center py-16">
-              <AlertTriangle className="mb-3 size-8 text-destructive/50" />
-              <p className="mb-1 font-medium text-sm">{error}</p>
-              <p className="mb-4 text-muted-foreground text-xs">
-                Make sure the backend server is running.
-              </p>
+                      {/* Category */}
+                      <TableCell className="py-2">
+                        <Badge variant="secondary" className="font-normal">
+                          {catConfig?.label ?? source.category}
+                        </Badge>
+                      </TableCell>
+
+                      {/* Status */}
+                      <TableCell className="py-2">
+                        <StatusDot status={source.status} />
+                      </TableCell>
+
+                      {/* Priority */}
+                      <TableCell className="py-2">
+                        <PriorityBadge priority={source.priority} />
+                      </TableCell>
+
+                      {/* Posts */}
+                      <TableCell className="hidden py-2 md:table-cell">
+                        <span className="text-muted-foreground text-xs tabular-nums">
+                          {source._count?.posts ?? 0}
+                        </span>
+                      </TableCell>
+
+                      {/* Last Crawled */}
+                      <TableCell className="hidden py-2 md:table-cell">
+                        <span
+                          className="whitespace-nowrap text-muted-foreground text-xs"
+                          title={
+                            source.lastCrawledAt
+                              ? formatDateTime(source.lastCrawledAt)
+                              : undefined
+                          }
+                        >
+                          {source.lastCrawledAt
+                            ? formatRelativeTime(source.lastCrawledAt)
+                            : "Never"}
+                        </span>
+                      </TableCell>
+
+                      {/* Actions */}
+                      <TableCell className="py-2">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon-xs"
+                            title="Edit source"
+                            onClick={() => setPanel({ type: "edit", source })}
+                          >
+                            <Pencil className="size-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon-xs"
+                            title="Delete source"
+                            onClick={() => setPanel({ type: "delete", source })}
+                            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                          >
+                            <Trash2 className="size-3.5" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
+        {/* ─── Pagination ────────────────────────── */}
+        {!loading && pagination && pagination.totalPages > 1 && (
+          <div className="flex items-center justify-between text-muted-foreground text-xs">
+            <span>
+              Page {pagination.page} of {pagination.totalPages}
+              {" · "}
+              {pagination.total} source{pagination.total !== 1 ? "s" : ""}
+            </span>
+            <div className="flex items-center gap-1">
               <Button
                 variant="outline"
-                size="sm"
-                onClick={() => loadSources(query)}
+                size="icon-xs"
+                onClick={() =>
+                  setQuery(prev => ({
+                    ...prev,
+                    page: Math.max(1, (prev.page ?? 1) - 1),
+                  }))
+                }
+                disabled={!pagination.hasPrev}
               >
-                Try again
+                <ChevronLeftIcon className="size-3.5" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon-xs"
+                onClick={() =>
+                  setQuery(prev => ({
+                    ...prev,
+                    page: Math.min(pagination.totalPages, (prev.page ?? 1) + 1),
+                  }))
+                }
+                disabled={!pagination.hasNext}
+              >
+                <ChevronRightIcon className="size-3.5" />
               </Button>
             </div>
-          ) : sources.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16">
-              <Globe className="mb-3 size-10 text-muted-foreground/40" />
-              <p className="mb-1 font-medium text-sm">No sources found</p>
-              <p className="mb-4 text-muted-foreground text-xs">
-                {hasActiveFilters
-                  ? "Try adjusting your filters."
-                  : "Add your first dark-web source to start monitoring."}
-              </p>
-              {hasActiveFilters ? (
-                <Button variant="outline" size="sm" onClick={clearFilters}>
-                  Clear filters
-                </Button>
-              ) : (
-                <Button
-                  size="sm"
-                  className="gap-1.5"
-                  onClick={() => setPanel({ type: "create" })}
-                >
-                  <Plus className="size-3.5" />
-                  Add Source
-                </Button>
-              )}
-            </div>
-          ) : (
-            <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead className="hidden lg:table-cell">URL</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Priority</TableHead>
-                    <TableHead className="hidden md:table-cell">
-                      Posts
-                    </TableHead>
-                    <TableHead className="hidden md:table-cell">
-                      Last Crawled
-                    </TableHead>
-                    <TableHead className="w-24 text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sources.map(source => {
-                    const catConfig =
-                      SOURCE_CATEGORY_CONFIG[
-                        source.category as keyof typeof SOURCE_CATEGORY_CONFIG
-                      ];
-
-                    return (
-                      <TableRow key={source.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm">
-                              {catConfig?.icon ?? "🌐"}
-                            </span>
-                            <div className="min-w-0">
-                              <p className="truncate font-medium text-xs">
-                                {source.name}
-                              </p>
-                              {source.loginRequired && (
-                                <Badge
-                                  variant="outline"
-                                  className="mt-0.5 text-[10px]"
-                                >
-                                  <Shield className="mr-0.5 size-2.5" />
-                                  Login
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="hidden max-w-[200px] lg:table-cell">
-                          <div className="flex items-center gap-1.5">
-                            <span className="truncate font-mono text-[10px] text-muted-foreground">
-                              {source.url}
-                            </span>
-                            <a
-                              href={source.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="shrink-0 text-primary opacity-0 transition-opacity hover:text-primary/80 group-hover:opacity-100"
-                              onClick={e => e.stopPropagation()}
-                            >
-                              <ExternalLink className="size-3" />
-                            </a>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="secondary" className="font-normal">
-                            {catConfig?.label ?? source.category}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <StatusDot status={source.status} />
-                        </TableCell>
-                        <TableCell>
-                          <PriorityBadge priority={source.priority} />
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          <span className="text-muted-foreground text-xs tabular-nums">
-                            {source._count?.posts ?? 0}
-                          </span>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          <span
-                            className="text-muted-foreground text-xs"
-                            title={
-                              source.lastCrawledAt
-                                ? formatDateTime(source.lastCrawledAt)
-                                : undefined
-                            }
-                          >
-                            {source.lastCrawledAt
-                              ? formatRelativeTime(source.lastCrawledAt)
-                              : "Never"}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center justify-end gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon-xs"
-                              title="Edit source"
-                              onClick={() => setPanel({ type: "edit", source })}
-                            >
-                              <Pencil className="size-3.5" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon-xs"
-                              title="Delete source"
-                              onClick={() =>
-                                setPanel({ type: "delete", source })
-                              }
-                              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                            >
-                              <Trash2 className="size-3.5" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-
-              {/* Pagination */}
-              {pagination && pagination.totalPages > 1 && (
-                <div className="mt-4 border-t pt-4">
-                  <Pagination
-                    pagination={pagination}
-                    onPageChange={page => setQuery(prev => ({ ...prev, page }))}
-                  />
-                </div>
-              )}
-            </>
-          )}
-        </CardContent>
-      </Card>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
