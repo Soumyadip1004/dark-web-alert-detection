@@ -341,119 +341,12 @@ export default function AlertsPage() {
         </Button>
       </div>
 
-      {/* ─── Filters ─────────────────────────────────── */}
+      {/* ─── Filters + Table ─────────────────────────── */}
       <Card>
-        <CardContent className="pt-4">
-          <div className="flex flex-wrap items-end gap-3">
-            {/* Search */}
-            <div className="flex min-w-[200px] flex-1 items-center gap-1.5">
-              <div className="relative flex-1">
-                <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Search alerts..."
-                  value={searchInput}
-                  onChange={e => setSearchInput(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === "Enter") handleSearch();
-                  }}
-                  className="pl-8"
-                />
-              </div>
-              <Button variant="outline" size="default" onClick={handleSearch}>
-                Search
-              </Button>
-            </div>
-
-            {/* Risk Level */}
-            <Select
-              value={query.riskLevel ?? "_all"}
-              onValueChange={val =>
-                updateFilter({
-                  riskLevel: val === "_all" ? undefined : (val as RiskLevel),
-                })
-              }
-            >
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="Risk Level" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="_all">All Levels</SelectItem>
-                <SelectItem value="CRITICAL">Critical</SelectItem>
-                <SelectItem value="HIGH">High</SelectItem>
-                <SelectItem value="MEDIUM">Medium</SelectItem>
-                <SelectItem value="LOW">Low</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* Leak Type */}
-            <Select
-              value={query.leakType ?? "_all"}
-              onValueChange={val =>
-                updateFilter({
-                  leakType: val === "_all" ? undefined : (val as LeakType),
-                })
-              }
-            >
-              <SelectTrigger className="w-[160px]">
-                <SelectValue placeholder="Leak Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="_all">All Types</SelectItem>
-                <SelectItem value="CREDIT_CARD">Credit Card</SelectItem>
-                <SelectItem value="CREDENTIAL_DUMP">Credentials</SelectItem>
-                <SelectItem value="BANK_DATA">Bank Data</SelectItem>
-                <SelectItem value="PII">PII</SelectItem>
-                <SelectItem value="OTHER">Other</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* Review Status */}
-            <Select
-              value={
-                query.reviewed === undefined
-                  ? "_all"
-                  : query.reviewed
-                    ? "true"
-                    : "false"
-              }
-              onValueChange={val =>
-                updateFilter({
-                  reviewed: val === "_all" ? undefined : val === "true",
-                })
-              }
-            >
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="_all">All Status</SelectItem>
-                <SelectItem value="false">Unreviewed</SelectItem>
-                <SelectItem value="true">Reviewed</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* Clear Filters */}
-            {hasActiveFilters && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearFilters}
-                className="gap-1 text-muted-foreground"
-              >
-                <X className="size-3.5" />
-                Clear
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* ─── Alerts Table ────────────────────────────── */}
-      <Card>
-        <CardHeader className="pb-0">
-          <div className="flex items-center justify-between">
+        <CardHeader>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <CardTitle className="text-base">Alert Results</CardTitle>
+              <CardTitle>Alert Results</CardTitle>
               {pagination && (
                 <CardDescription>
                   {pagination.total} alert{pagination.total !== 1 ? "s" : ""}{" "}
@@ -461,9 +354,109 @@ export default function AlertsPage() {
                 </CardDescription>
               )}
             </div>
+            {hasActiveFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearFilters}
+                className="gap-1 text-muted-foreground text-xs"
+              >
+                <X className="size-3" />
+                Clear filters
+              </Button>
+            )}
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          {/* ─── Search & Filter Toolbar ────────────── */}
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            {/* Search */}
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search alerts..."
+                value={searchInput}
+                onChange={e => setSearchInput(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === "Enter") handleSearch();
+                }}
+                className="h-8 pl-8 text-xs"
+              />
+            </div>
+
+            {/* Filter selects */}
+            <div className="flex items-center gap-2">
+              {/* Risk Level */}
+              <Select
+                value={query.riskLevel ?? "_all"}
+                onValueChange={val =>
+                  updateFilter({
+                    riskLevel: val === "_all" ? undefined : (val as RiskLevel),
+                  })
+                }
+              >
+                <SelectTrigger className="h-8 w-36 text-xs" size="sm">
+                  <SelectValue placeholder="Risk Level" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_all">All Levels</SelectItem>
+                  <SelectItem value="CRITICAL">Critical</SelectItem>
+                  <SelectItem value="HIGH">High</SelectItem>
+                  <SelectItem value="MEDIUM">Medium</SelectItem>
+                  <SelectItem value="LOW">Low</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Leak Type */}
+              <Select
+                value={query.leakType ?? "_all"}
+                onValueChange={val =>
+                  updateFilter({
+                    leakType: val === "_all" ? undefined : (val as LeakType),
+                  })
+                }
+              >
+                <SelectTrigger className="h-8 w-36 text-xs" size="sm">
+                  <SelectValue placeholder="Leak Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_all">All Types</SelectItem>
+                  <SelectItem value="CREDIT_CARD">Credit Card</SelectItem>
+                  <SelectItem value="CREDENTIAL_DUMP">Credentials</SelectItem>
+                  <SelectItem value="BANK_DATA">Bank Data</SelectItem>
+                  <SelectItem value="PII">PII</SelectItem>
+                  <SelectItem value="OTHER">Other</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Review Status */}
+              <Select
+                value={
+                  query.reviewed === undefined
+                    ? "_all"
+                    : query.reviewed
+                      ? "true"
+                      : "false"
+                }
+                onValueChange={val =>
+                  updateFilter({
+                    reviewed: val === "_all" ? undefined : val === "true",
+                  })
+                }
+              >
+                <SelectTrigger className="h-8 w-32 text-xs" size="sm">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_all">All Status</SelectItem>
+                  <SelectItem value="false">Unreviewed</SelectItem>
+                  <SelectItem value="true">Reviewed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* ─── Table ─────────────────────────────── */}
           {loading ? (
             <AlertsTableSkeleton />
           ) : error ? (

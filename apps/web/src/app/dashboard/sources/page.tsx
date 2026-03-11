@@ -547,31 +547,25 @@ export default function SourcesPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* ─── Header ──────────────────────────────────── */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="font-semibold text-2xl tracking-tight">Sources</h1>
           <p className="text-muted-foreground text-sm">
-            Manage monitored dark-web sources — forums, marketplaces, and paste
-            sites.
+            Manage monitored dark-web sources.
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
-            className="gap-1.5"
             onClick={() => loadSources(query)}
           >
             <RotateCw className="size-3.5" />
             Refresh
           </Button>
-          <Button
-            size="sm"
-            className="gap-1.5"
-            onClick={() => setPanel({ type: "create" })}
-          >
+          <Button size="sm" onClick={() => setPanel({ type: "create" })}>
             <Plus className="size-3.5" />
             Add Source
           </Button>
@@ -642,115 +636,12 @@ export default function SourcesPage() {
         </Card>
       )}
 
-      {/* ─── Filters ─────────────────────────────────── */}
+      {/* ─── Filters + Table ─────────────────────────── */}
       <Card>
-        <CardContent className="pt-4">
-          <div className="flex flex-wrap items-end gap-3">
-            {/* Search */}
-            <div className="flex min-w-[200px] flex-1 items-center gap-1.5">
-              <div className="relative flex-1">
-                <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Search by name or URL..."
-                  value={searchInput}
-                  onChange={e => setSearchInput(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === "Enter") handleSearch();
-                  }}
-                  className="pl-8"
-                />
-              </div>
-              <Button variant="outline" size="default" onClick={handleSearch}>
-                Search
-              </Button>
-            </div>
-
-            {/* Category */}
-            <Select
-              value={query.category ?? "_all"}
-              onValueChange={val =>
-                updateFilter({
-                  category:
-                    val === "_all" ? undefined : (val as SourceCategory),
-                })
-              }
-            >
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="Category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="_all">All Categories</SelectItem>
-                <SelectItem value="BREACH_FORUM">Breach Forum</SelectItem>
-                <SelectItem value="MARKETPLACE">Marketplace</SelectItem>
-                <SelectItem value="PASTE_SITE">Paste Site</SelectItem>
-                <SelectItem value="LEAK_SITE">Leak Site</SelectItem>
-                <SelectItem value="OTHER">Other</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* Status */}
-            <Select
-              value={query.status ?? "_all"}
-              onValueChange={val =>
-                updateFilter({
-                  status: val === "_all" ? undefined : (val as SourceStatus),
-                })
-              }
-            >
-              <SelectTrigger className="w-[130px]">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="_all">All Status</SelectItem>
-                <SelectItem value="ACTIVE">Active</SelectItem>
-                <SelectItem value="INACTIVE">Inactive</SelectItem>
-                <SelectItem value="BLOCKED">Blocked</SelectItem>
-                <SelectItem value="ERROR">Error</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* Priority */}
-            <Select
-              value={query.priority ?? "_all"}
-              onValueChange={val =>
-                updateFilter({
-                  priority: val === "_all" ? undefined : (val as Priority),
-                })
-              }
-            >
-              <SelectTrigger className="w-[130px]">
-                <SelectValue placeholder="Priority" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="_all">All Priorities</SelectItem>
-                <SelectItem value="CRITICAL">Critical</SelectItem>
-                <SelectItem value="HIGH">High</SelectItem>
-                <SelectItem value="MEDIUM">Medium</SelectItem>
-                <SelectItem value="LOW">Low</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {hasActiveFilters && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearFilters}
-                className="gap-1 text-muted-foreground"
-              >
-                <X className="size-3.5" />
-                Clear
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* ─── Sources Table ───────────────────────────── */}
-      <Card>
-        <CardHeader className="pb-0">
-          <div className="flex items-center justify-between">
+        <CardHeader>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <CardTitle className="text-base">Monitored Sources</CardTitle>
+              <CardTitle>Monitored Sources</CardTitle>
               {pagination && (
                 <CardDescription>
                   {pagination.total} source{pagination.total !== 1 ? "s" : ""}{" "}
@@ -758,9 +649,103 @@ export default function SourcesPage() {
                 </CardDescription>
               )}
             </div>
+            {hasActiveFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearFilters}
+                className="gap-1 text-muted-foreground text-xs"
+              >
+                <X className="size-3" />
+                Clear filters
+              </Button>
+            )}
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          {/* ─── Search & Filter Toolbar ────────────── */}
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            {/* Search */}
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search by name or URL..."
+                value={searchInput}
+                onChange={e => setSearchInput(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === "Enter") handleSearch();
+                }}
+                className="h-8 pl-8 text-xs"
+              />
+            </div>
+
+            {/* Filter selects */}
+            <div className="flex items-center gap-2">
+              <Select
+                value={query.category ?? "_all"}
+                onValueChange={val =>
+                  updateFilter({
+                    category:
+                      val === "_all" ? undefined : (val as SourceCategory),
+                  })
+                }
+              >
+                <SelectTrigger className="h-8 w-36 text-xs" size="sm">
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_all">All Categories</SelectItem>
+                  <SelectItem value="BREACH_FORUM">Breach Forum</SelectItem>
+                  <SelectItem value="MARKETPLACE">Marketplace</SelectItem>
+                  <SelectItem value="PASTE_SITE">Paste Site</SelectItem>
+                  <SelectItem value="LEAK_SITE">Leak Site</SelectItem>
+                  <SelectItem value="OTHER">Other</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={query.status ?? "_all"}
+                onValueChange={val =>
+                  updateFilter({
+                    status: val === "_all" ? undefined : (val as SourceStatus),
+                  })
+                }
+              >
+                <SelectTrigger className="h-8 w-32 text-xs" size="sm">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_all">All Status</SelectItem>
+                  <SelectItem value="ACTIVE">Active</SelectItem>
+                  <SelectItem value="INACTIVE">Inactive</SelectItem>
+                  <SelectItem value="BLOCKED">Blocked</SelectItem>
+                  <SelectItem value="ERROR">Error</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={query.priority ?? "_all"}
+                onValueChange={val =>
+                  updateFilter({
+                    priority: val === "_all" ? undefined : (val as Priority),
+                  })
+                }
+              >
+                <SelectTrigger className="h-8 w-32 text-xs" size="sm">
+                  <SelectValue placeholder="Priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="_all">All Priorities</SelectItem>
+                  <SelectItem value="CRITICAL">Critical</SelectItem>
+                  <SelectItem value="HIGH">High</SelectItem>
+                  <SelectItem value="MEDIUM">Medium</SelectItem>
+                  <SelectItem value="LOW">Low</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* ─── Table ─────────────────────────────── */}
           {loading ? (
             <SourcesTableSkeleton />
           ) : error ? (
