@@ -1,0 +1,26 @@
+{
+  "name": "crawler",
+  "type": "module",
+  "private": true,
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "bun run --hot src/index.ts",
+    "start": "bun run src/index.ts",
+    "check-types": "tsc -b",
+    "seed": "bun run src/seed.ts"
+  },
+  "dependencies": {
+    "@dark-web-alert-detection/db": "workspace:*",
+    "@dark-web-alert-detection/env": "workspace:*",
+    "axios": "^1.9.0",
+    "cheerio": "^1.0.0",
+    "dotenv": "catalog:",
+    "socks-proxy-agent": "^8.0.5",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@dark-web-alert-detection/config": "workspace:*",
+    "@types/bun": "catalog:",
+    "typescript": "^5"
+  }
+}

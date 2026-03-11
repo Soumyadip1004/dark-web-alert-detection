@@ -1,0 +1,102 @@
+// ─── Enums ─────────────────────────────────────────────
+
+enum SourceCategory {
+  BREACH_FORUM
+  MARKETPLACE
+  PASTE_SITE
+  LEAK_SITE
+  OTHER
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum SourceStatus {
+  ACTIVE
+  INACTIVE
+  BLOCKED
+  ERROR
+}
+
+enum LeakType {
+  CREDIT_CARD
+  CREDENTIAL_DUMP
+  BANK_DATA
+  PII
+  OTHER
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+// ─── Sources ───────────────────────────────────────────
+
+/// Monitored dark-web sources (forums, marketplaces, paste sites, etc.)
+model Source {
+  id            String         @id @default(cuid())
+  name          String
+  url           String         @unique
+  category      SourceCategory
+  priority      Priority       @default(MEDIUM)
+  status        SourceStatus   @default(ACTIVE)
+  loginRequired Boolean        @default(false)
+  lastCrawledAt DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  posts         Post[]
+
+  @@index([category])
+  @@index([status])
+  @@map("source")
+}
+
+// ─── Scraped Posts ─────────────────────────────────────
+
+/// Raw scraped content from dark-web sources
+model Post {
+  id         String    @id @default(cuid())
+  sourceId   String
+  source     Source    @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  url        String    @unique
+  title      String?
+  content    String
+  author     String?
+  scrapedAt  DateTime  @default(now())
+  analyzedAt DateTime?
+  alerts     Alert[]
+
+  @@index([sourceId])
+  @@index([scrapedAt])
+  @@map("post")
+}
+
+// ─── Alerts ────────────────────────────────────────────
+
+/// Generated alerts when leak detection engine finds suspicious content
+model Alert {
+  id          String    @id @default(cuid())
+  postId      String
+  post        Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  bankName    String?
+  leakType    LeakType
+  riskLevel   RiskLevel
+  matchedData String    /// Summary of what triggered the alert
+  detectedAt  DateTime  @default(now())
+  reviewed    Boolean   @default(false)
+  reviewedBy  String?
+  reviewedAt  DateTime?
+
+  @@index([postId])
+  @@index([riskLevel])
+  @@index([detectedAt])
+  @@index([reviewed])
+  @@map("alert")
+}

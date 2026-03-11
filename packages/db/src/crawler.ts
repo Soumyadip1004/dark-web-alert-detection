@@ -1,4 +1,4 @@
-import { env } from "@dark-web-alert-detection/env/server";
+import { env } from "@dark-web-alert-detection/env/crawler";
 import { PrismaNeon } from "@prisma/adapter-neon";
 
 import { PrismaClient } from "../prisma/generated/client";
