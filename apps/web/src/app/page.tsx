@@ -1,4 +1,3 @@
-import { Button } from "@dark-web-alert-detection/ui/components/button";
 import {
   Card,
   CardContent,
@@ -9,17 +8,16 @@ import {
 import {
   Activity,
   AlertTriangle,
-  ArrowRight,
   Database,
   Eye,
   Globe,
-  Lock,
   Search,
   Shield,
   ShieldAlert,
   Zap,
 } from "lucide-react";
-import Link from "next/link";
+
+import { FooterCTA, HeroCTA } from "@/components/landing-cta";
 
 function HeroGlow() {
   return (
@@ -129,20 +127,7 @@ export default function LandingPage() {
           scoring to protect your institution.
         </p>
 
-        <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row">
-          <Link href="/dashboard">
-            <Button size="lg" className="gap-2 px-6">
-              Go to Dashboard
-              <ArrowRight className="size-4" />
-            </Button>
-          </Link>
-          <Link href="/login">
-            <Button variant="outline" size="lg" className="gap-2 px-6">
-              <Lock className="size-4" />
-              Sign In
-            </Button>
-          </Link>
-        </div>
+        <HeroCTA />
 
         {/* ─── Stat Badges ──────────────────────────── */}
         <div className="mt-16 grid w-full max-w-2xl grid-cols-2 gap-4 md:grid-cols-4">
@@ -269,18 +254,8 @@ export default function LandingPage() {
                 institution from emerging threats.
               </CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-              <Link href="/login">
-                <Button size="lg" className="gap-2 px-8">
-                  Get Started
-                  <ArrowRight className="size-4" />
-                </Button>
-              </Link>
-              <Link href="/dashboard">
-                <Button variant="outline" size="lg" className="px-8">
-                  View Dashboard
-                </Button>
-              </Link>
+            <CardContent>
+              <FooterCTA />
             </CardContent>
           </Card>
         </div>

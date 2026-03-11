@@ -1,8 +1,12 @@
 "use client";
 
+import { Button } from "@dark-web-alert-detection/ui/components/button";
 import { Separator } from "@dark-web-alert-detection/ui/components/separator";
 import { SidebarTrigger } from "@dark-web-alert-detection/ui/components/sidebar";
-import { usePathname } from "next/navigation";
+import { LogOutIcon } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+
+import { authClient } from "@/lib/auth-client";
 
 import { ModeToggle } from "./mode-toggle";
 
@@ -31,7 +35,18 @@ function getPageTitle(pathname: string): string {
 
 export function SiteHeader() {
   const pathname = usePathname();
+  const router = useRouter();
   const title = getPageTitle(pathname);
+
+  const handleSignOut = () => {
+    authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          router.push("/");
+        },
+      },
+    });
+  };
 
   return (
     <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
@@ -46,6 +61,10 @@ export function SiteHeader() {
         </div>
         <div className="flex items-center gap-2">
           <ModeToggle />
+          <Button variant="destructive" onClick={handleSignOut}>
+            <LogOutIcon className="size-3.5" />
+            <span className="hidden sm:inline">Logout</span>
+          </Button>
         </div>
       </div>
     </header>
