@@ -45,6 +45,30 @@ export type SourceCategory =
 export type SourceStatus = "ACTIVE" | "INACTIVE" | "BLOCKED" | "ERROR";
 export type Priority = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 
+export interface AlertEvidence {
+  patternMatches: {
+    patternId: string;
+    patternName: string;
+    category: string;
+    matchCount: number;
+    samples: string[];
+  }[];
+  keywordHits: {
+    term: string;
+    category: string;
+    weight: number;
+    count: number;
+  }[];
+  bankMentions: {
+    bankName: string;
+    region: string;
+    mentionCount: number;
+    contextSnippet: string;
+  }[];
+  compositeScore: number;
+  riskSummary: string;
+}
+
 export interface Alert {
   id: string;
   postId: string;
@@ -52,6 +76,7 @@ export interface Alert {
   leakType: LeakType;
   riskLevel: RiskLevel;
   matchedData: string;
+  evidenceData: AlertEvidence | null;
   detectedAt: string;
   reviewed: boolean;
   reviewedBy: string | null;

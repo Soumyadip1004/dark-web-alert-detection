@@ -55,6 +55,42 @@ import {
 // ─── Public Types ──────────────────────────────────────
 
 /**
+ * Structured evidence capturing the actual problematic data
+ * that triggered an alert — pattern matches with samples,
+ * keyword hits, and bank mention context.
+ */
+export interface AlertEvidence {
+  /** Pattern matches with samples of the actual detected data */
+  patternMatches: {
+    patternId: string;
+    patternName: string;
+    category: string;
+    matchCount: number;
+    /** Redacted samples of the matched data */
+    samples: string[];
+  }[];
+  /** High-severity keywords that were found */
+  keywordHits: {
+    term: string;
+    category: string;
+    weight: number;
+    count: number;
+  }[];
+  /** Bank mentions with surrounding context */
+  bankMentions: {
+    bankName: string;
+    region: string;
+    mentionCount: number;
+    /** Short context snippet around the mention */
+    contextSnippet: string;
+  }[];
+  /** The overall composite risk score (0–100) */
+  compositeScore: number;
+  /** Human-readable risk summary */
+  riskSummary: string;
+}
+
+/**
  * A single alert record ready for database insertion.
  * Each alert corresponds to one leak-type finding from the analysis.
  */
@@ -67,6 +103,8 @@ export interface AlertRecord {
   riskLevel: RiskLevel;
   /** Human-readable summary of what triggered this alert */
   matchedData: string;
+  /** Structured evidence data for the alert */
+  evidenceData?: AlertEvidence | null;
 }
 
 export type LeakType =
@@ -362,6 +400,14 @@ function generateAlerts(
         leakType: primaryLeakType,
         riskLevel: overallRiskLevel,
         matchedData,
+        evidenceData: buildEvidence(
+          bankResult,
+          keywordResult,
+          patternMatches,
+          riskScore,
+          bankMatch,
+          content,
+        ),
       });
     }
   }
@@ -402,6 +448,14 @@ function generateAlerts(
       leakType,
       riskLevel: overallRiskLevel,
       matchedData,
+      evidenceData: buildEvidence(
+        bankResult,
+        keywordResult,
+        categoryPatterns,
+        riskScore,
+        null,
+        content,
+      ),
     });
   }
 
@@ -427,6 +481,14 @@ function generateAlerts(
           `Keywords: ${topKeywords}` +
           ` | Category: ${categoryGroup.category}` +
           ` | Weighted score: ${categoryGroup.weightedScore}`,
+        evidenceData: buildEvidence(
+          bankResult,
+          keywordResult,
+          patternMatches,
+          riskScore,
+          null,
+          content,
+        ),
       });
     }
   }
@@ -443,6 +505,74 @@ function generateAlerts(
   });
 
   return alerts.slice(0, maxAlerts);
+}
+
+// ─── Evidence Builder ──────────────────────────────────
+
+/**
+ * Build structured evidence data for an alert from the detection results.
+ * This captures the actual problematic data (redacted samples, keyword hits,
+ * bank context) so analysts can see exactly what triggered the alert.
+ */
+function buildEvidence(
+  bankResult: BankDetectionResult,
+  keywordResult: KeywordDetectionResult,
+  patterns: PatternMatch[],
+  riskScore: RiskScoreResult,
+  focusBankMatch: BankMatch | null,
+  content: string,
+): AlertEvidence {
+  // Pattern matches — include all matched patterns with their samples
+  const patternEvidence = patterns.map(p => ({
+    patternId: p.patternId,
+    patternName: p.patternName,
+    category: p.category,
+    matchCount: p.matchCount,
+    samples: p.samples.slice(0, 5),
+  }));
+
+  // Keyword hits — include high-weight keywords (weight >= 5)
+  const keywordHits: AlertEvidence["keywordHits"] = [];
+  for (const catGroup of keywordResult.categories) {
+    for (const kw of catGroup.matches) {
+      if (kw.weight >= 5) {
+        keywordHits.push({
+          term: kw.term,
+          category: catGroup.category,
+          weight: kw.weight,
+          count: kw.matchCount,
+        });
+      }
+    }
+  }
+  // Sort by weight descending, cap at 20
+  keywordHits.sort((a, b) => b.weight - a.weight || b.count - a.count);
+  keywordHits.splice(20);
+
+  // Bank mentions — either focus on a specific bank or include all
+  const bankMentions: AlertEvidence["bankMentions"] = [];
+  const banksToInclude = focusBankMatch ? [focusBankMatch] : bankResult.matches;
+
+  for (const bm of banksToInclude) {
+    const snippet =
+      bm.positions.length > 0
+        ? extractContext(content, bm.positions[0] ?? 0, 150)
+        : "";
+    bankMentions.push({
+      bankName: bm.bankName,
+      region: bm.region,
+      mentionCount: bm.mentionCount,
+      contextSnippet: snippet,
+    });
+  }
+
+  return {
+    patternMatches: patternEvidence,
+    keywordHits,
+    bankMentions,
+    compositeScore: Math.round(riskScore.compositeScore * 10) / 10,
+    riskSummary: riskScore.summary,
+  };
 }
 
 // ─── Helper Functions ──────────────────────────────────

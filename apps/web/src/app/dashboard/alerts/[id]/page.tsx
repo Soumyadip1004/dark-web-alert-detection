@@ -21,7 +21,9 @@ import {
   Eye,
   EyeOff,
   FileText,
+  Fingerprint,
   Globe,
+  KeyRound,
   Loader2,
   Shield,
   ShieldAlert,
@@ -32,6 +34,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import {
   type Alert,
+  type AlertEvidence,
   fetchAlert,
   formatDateTime,
   formatRelativeTime,
@@ -42,6 +45,156 @@ import {
   SOURCE_STATUS_CONFIG,
 } from "@/lib/api";
 import { route } from "@/lib/routes";
+
+// ─── Evidence Card ─────────────────────────────────────
+
+function EvidenceCard({ evidence }: { evidence: AlertEvidence }) {
+  const hasPatterns = evidence.patternMatches.length > 0;
+  const hasKeywords = evidence.keywordHits.length > 0;
+  const hasBanks = evidence.bankMentions.length > 0;
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <Fingerprint className="size-4 text-destructive" />
+          <CardTitle className="text-base">Evidence</CardTitle>
+        </div>
+        <CardDescription>
+          Actual problematic data detected — risk score{" "}
+          <span className="font-semibold tabular-nums">
+            {evidence.compositeScore}
+          </span>
+          /100
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-5">
+        {/* Risk Summary */}
+        {evidence.riskSummary && (
+          <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-3">
+            <p className="text-sm leading-relaxed">{evidence.riskSummary}</p>
+          </div>
+        )}
+
+        {/* Pattern Matches */}
+        {hasPatterns && (
+          <div className="space-y-2">
+            <h4 className="flex items-center gap-1.5 font-medium text-sm">
+              <Fingerprint className="size-3.5 text-muted-foreground" />
+              Pattern Matches
+            </h4>
+            <div className="space-y-2">
+              {evidence.patternMatches.map(pm => (
+                <div
+                  key={pm.patternId}
+                  className="rounded-lg border bg-muted/30 p-3"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-medium text-xs">
+                      {pm.patternName}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary" className="text-[10px]">
+                        {pm.category}
+                      </Badge>
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] tabular-nums"
+                      >
+                        {pm.matchCount} match{pm.matchCount !== 1 ? "es" : ""}
+                      </Badge>
+                    </div>
+                  </div>
+                  {pm.samples.length > 0 && (
+                    <div className="mt-2 space-y-1">
+                      {pm.samples.map((sample, i) => (
+                        <code
+                          key={i}
+                          className="block rounded bg-background px-2 py-1 font-mono text-[11px] text-destructive"
+                        >
+                          {sample}
+                        </code>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Keyword Hits */}
+        {hasKeywords && (
+          <div className="space-y-2">
+            <h4 className="flex items-center gap-1.5 font-medium text-sm">
+              <KeyRound className="size-3.5 text-muted-foreground" />
+              Keyword Hits
+            </h4>
+            <div className="flex flex-wrap gap-1.5">
+              {evidence.keywordHits.map((kw, i) => (
+                <Badge
+                  key={i}
+                  variant="outline"
+                  className={cn(
+                    "gap-1 text-xs",
+                    kw.weight >= 8
+                      ? "border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400"
+                      : kw.weight >= 6
+                        ? "border-orange-500/30 bg-orange-500/10 text-orange-600 dark:text-orange-400"
+                        : "border-yellow-500/30 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400",
+                  )}
+                >
+                  {kw.term}
+                  <span className="text-[10px] opacity-70">
+                    w{kw.weight} ×{kw.count}
+                  </span>
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Bank Mentions */}
+        {hasBanks && (
+          <div className="space-y-2">
+            <h4 className="flex items-center gap-1.5 font-medium text-sm">
+              <Shield className="size-3.5 text-muted-foreground" />
+              Bank Mentions
+            </h4>
+            <div className="space-y-2">
+              {evidence.bankMentions.map((bm, i) => (
+                <div key={i} className="rounded-lg border bg-muted/30 p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-medium text-xs">{bm.bankName}</span>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary" className="text-[10px]">
+                        {bm.region}
+                      </Badge>
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] tabular-nums"
+                      >
+                        {bm.mentionCount} mention
+                        {bm.mentionCount !== 1 ? "s" : ""}
+                      </Badge>
+                    </div>
+                  </div>
+                  {bm.contextSnippet && (
+                    <div className="mt-2 rounded bg-background px-2 py-1.5">
+                      <p className="font-mono text-[11px] text-muted-foreground leading-relaxed">
+                        …{bm.contextSnippet}…
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 // ─── Risk Level Badge ──────────────────────────────────
 
@@ -314,6 +467,9 @@ export default function AlertDetailPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* ─── Evidence Card ────────────────────── */}
+          {alert.evidenceData && <EvidenceCard evidence={alert.evidenceData} />}
 
           {/* Post Content */}
           {alert.post && (

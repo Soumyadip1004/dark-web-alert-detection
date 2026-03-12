@@ -14,10 +14,9 @@
     "@dark-web-alert-detection/db": "workspace:*",
     "@dark-web-alert-detection/detection": "workspace:*",
     "@dark-web-alert-detection/env": "workspace:*",
-    "axios": "^1.9.0",
     "cheerio": "^1.0.0",
     "dotenv": "catalog:",
-    "socks-proxy-agent": "^8.0.5",
+    "socks": "^2.8.7",
     "zod": "catalog:"
   },
   "devDependencies": {

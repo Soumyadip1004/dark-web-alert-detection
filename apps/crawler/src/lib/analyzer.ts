@@ -212,6 +212,7 @@ async function persistAlerts(
       leakType: alert.leakType,
       riskLevel: alert.riskLevel,
       matchedData: truncateMatchedData(alert.matchedData),
+      evidenceData: alert.evidenceData ?? undefined,
       detectedAt: new Date(),
     }));
 

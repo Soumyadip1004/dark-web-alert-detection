@@ -1,6 +1,6 @@
 import { env } from "@dark-web-alert-detection/env/crawler";
 import { analyzePost } from "./analyzer";
-import { Fetcher } from "./fetcher";
+import { Fetcher, TorProxyError } from "./fetcher";
 import { createLogger } from "./logger";
 import { parsePage } from "./parser";
 import { CrawlQueue, type QueueEntry } from "./queue";
@@ -116,18 +116,58 @@ export class Crawler {
     this.running = true;
     log.info("Crawler started — entering main loop");
 
-    // Verify Tor connection before starting
+    // ── Mandatory Tor verification ─────────────────────────
+    // The crawler MUST NOT proceed without a verified Tor connection.
+    // Without Tor, requests would go directly over clearnet, leaking
+    // your real IP to dark web sources.
+    log.info("Verifying Tor proxy connection before starting...");
+
     const torOk = await this.fetcher.verifyTorConnection();
     if (!torOk) {
+      log.error("╔══════════════════════════════════════════════════════════╗");
+      log.error("║  FATAL: Tor proxy connection FAILED                     ║");
+      log.error("║                                                         ║");
+      log.error("║  The crawler CANNOT proceed without a working Tor       ║");
+      log.error("║  proxy. Without it, all traffic would go directly       ║");
+      log.error("║  over clearnet, exposing your real IP address.          ║");
+      log.error("║                                                         ║");
+      log.error("║  To fix this:                                           ║");
+      log.error("║    1. Start the Tor proxy:                              ║");
+      log.error("║       docker compose up -d tor-proxy                    ║");
+      log.error("║                                                         ║");
+      log.error("║    2. Verify it's listening:                            ║");
       log.error(
-        "Tor connection verification failed — crawler will attempt to proceed anyway",
+        "║       curl --socks5 127.0.0.1:9050 https://check.torproject.org/api/ip ║",
+      );
+      log.error("║                                                         ║");
+      log.error("║    3. Check your TOR_PROXY_URL env variable:            ║");
+      log.error(`║       Current: ${this.options.torProxyUrl.padEnd(41)}║`);
+      log.error("║       Expected: socks5h://127.0.0.1:9050               ║");
+      log.error("╚══════════════════════════════════════════════════════════╝");
+      this.running = false;
+      throw new Error(
+        "Tor proxy is not available — refusing to start crawler. " +
+          "Start the Tor proxy with: docker compose up -d tor-proxy",
       );
     }
 
+    // ── Main crawl loop ────────────────────────────────────
     while (this.running) {
       try {
         await this.runCycle();
       } catch (error) {
+        // If the Tor proxy went down mid-crawl, halt immediately
+        if (error instanceof TorProxyError) {
+          log.error(
+            "Tor proxy lost during crawl cycle — halting crawler to prevent direct connections",
+          );
+          log.error(
+            "Restart the Tor proxy and then restart the crawler to resume.",
+          );
+          this.running = false;
+          throw error;
+        }
+
         const message = error instanceof Error ? error.message : String(error);
         log.error(`Crawl cycle failed: ${message}`);
       }
@@ -138,6 +178,26 @@ export class Crawler {
         `Cycle complete — waiting ${this.options.intervalMs}ms before next cycle`,
       );
       await this.sleep(this.options.intervalMs);
+
+      // ── Re-verify Tor between cycles ───────────────────
+      // Ensure the proxy hasn't gone down while we were sleeping.
+      if (this.running && !this.fetcher.isTorVerified()) {
+        log.warn(
+          "Tor proxy was marked as unverified — re-checking before next cycle...",
+        );
+        const reVerified = await this.fetcher.verifyTorConnection();
+        if (!reVerified) {
+          log.error(
+            "Tor proxy re-verification failed — halting crawler to prevent direct connections",
+          );
+          this.running = false;
+          throw new Error(
+            "Tor proxy is no longer available — crawler halted for safety. " +
+              "Restart the Tor proxy and then restart the crawler.",
+          );
+        }
+        log.info("Tor proxy re-verified — continuing to next cycle");
+      }
     }
 
     log.info("Crawler stopped");
@@ -398,6 +458,16 @@ export class Crawler {
         durationMs,
       };
     } catch (error) {
+      // If the Tor proxy itself is down, re-throw immediately to halt the crawler.
+      // We do NOT want to retry or continue — every further request would either
+      // fail or (worse) bypass the proxy.
+      if (error instanceof TorProxyError) {
+        log.error(
+          `🛑 Tor proxy error during fetch of ${url} — propagating to halt crawler`,
+        );
+        throw error;
+      }
+
       this.totalErrors++;
       const durationMs = Date.now() - startTime;
       const message = error instanceof Error ? error.message : String(error);

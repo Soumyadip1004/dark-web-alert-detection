@@ -88,8 +88,10 @@ model Alert {
   bankName    String?
   leakType    LeakType
   riskLevel   RiskLevel
-  matchedData String    /// Summary of what triggered the alert
-  detectedAt  DateTime  @default(now())
+  matchedData    String    /// Summary of what triggered the alert
+  /// Structured evidence: pattern matches, samples, keyword hits, bank mentions
+  evidenceData   Json?
+  detectedAt     DateTime  @default(now())
   reviewed    Boolean   @default(false)
   reviewedBy  String?
   reviewedAt  DateTime?
